@@ -1,8 +1,18 @@
-import { PrismaClient } from './app/generated/prisma'
+import { PrismaClient } from '../app/generated/prisma'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
 import * as fs from 'fs'
 import * as path from 'path'
+import 'dotenv/config'
 
-const prisma = new PrismaClient()
+// Create Prisma client with adapter
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) {
+    throw new Error('DATABASE_URL environment variable is not set')
+}
+const pool = new Pool({ connectionString })
+const adapter = new PrismaPg(pool)
+const prisma = new PrismaClient({ adapter })
 
 // Helper to guess ingredient category based on common patterns
 function guessCategory(ingredient: string): string {
@@ -159,5 +169,6 @@ main()
         process.exit(1)
     })
     .finally(async () => {
+        await pool.end()
         await prisma.$disconnect()
     })
