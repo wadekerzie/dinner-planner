@@ -1,0 +1,69 @@
+// Prisma schema for Dinner Planner & Shopping List
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model MealTemplate {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  description  String?
+  tags         String[]      @default([])
+  ingredients  Json          @default("[]")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  dinnerEvents DinnerEvent[]
+}
+
+model DinnerEvent {
+  id             String        @id @default(cuid())
+  externalId     String?
+  date           DateTime      @db.Date
+  title          String
+  mealTemplateId String?
+  mealTemplate   MealTemplate? @relation(fields: [mealTemplateId], references: [id])
+  notes          String?
+  source         String        @default("webhook")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([date])
+}
+
+model PantryItem {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  category     String
+  alwaysOnHand Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model GroceryList {
+  id        String            @id @default(cuid())
+  startDate DateTime          @db.Date
+  endDate   DateTime          @db.Date
+  isActive  Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  items     GroceryListItem[]
+}
+
+model GroceryListItem {
+  id            String      @id @default(cuid())
+  groceryListId String
+  groceryList   GroceryList @relation(fields: [groceryListId], references: [id], onDelete: Cascade)
+  name          String
+  category      String
+  fromMeals     String[]    @default([])
+  isChecked     Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([groceryListId, name])
+}
